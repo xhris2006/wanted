@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Recherches — WANTED</title>
+<link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+<nav class="topnav"><button class="nav-logo" onclick="location.href='../index.html'">Wanted</button><div class="nav-links" id="nav-links"></div><div class="nav-search-wrap"><span class="nav-search-icon">🔍</span><input class="nav-search" id="nav-search" placeholder="Rechercher…" oninput="onSearch(this.value)"></div><div class="nav-right" id="nav-right"></div></nav>
+<div class="mobile-topbar"><button class="nav-logo" style="font-size:20px" onclick="location.href='../index.html'">Wanted</button><div class="mobile-topbar-right"><button class="btn-icon" onclick="document.getElementById('mobile-search-ov').classList.toggle('open')">🔍</button><div id="mobile-right"></div></div></div>
+<div class="mobile-search-ov" id="mobile-search-ov"><input class="mobile-search-inp" id="mobile-search" placeholder="Rechercher…" oninput="onSearch(this.value)"><button class="btn btn-ghost btn-sm" onclick="document.getElementById('mobile-search-ov').classList.remove('open')">✕</button></div>
+<div id="notif-panel" class="notif-panel"><div class="notif-hd">NOTIFICATIONS <span class="notif-mark" onclick="markNotifsRead()">Tout lire</span></div><div id="notif-list"></div></div>
+
+<main style="padding-top:var(--nav-h);padding-bottom:var(--bottom-h)">
+  <div class="feed-layout">
+    <div class="feed-main">
+      <div class="feed-top">
+        <div class="feed-title">RECHERCHES</div>
+        <button class="btn btn-primary btn-sm" onclick="openNewPost()" style="margin-left:auto">+ Signaler</button>
+      </div>
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="setFilter('all',this)">Tous</button>
+        <button class="filter-tab" onclick="setFilter('critical',this)">🔴 Critiques</button>
+        <button class="filter-tab" onclick="setFilter('urgent',this)">🟠 Urgents</button>
+        <button class="filter-tab" onclick="setFilter('found',this)">🟢 Retrouvés</button>
+        <button class="filter-tab" onclick="setFilter('mine',this)">📝 Les miens</button>
+      </div>
+      <div id="posts-list"><div class="spinner"></div></div>
+    </div>
+    <div class="feed-side">
+      <div style="margin-bottom:18px"><div class="sidebar-label">STATISTIQUES</div>
+        <div class="stat-card">
+          <div class="stat-row"><span>Personnes recherchées</span><span class="stat-val" id="sv-missing">—</span></div>
+          <div class="stat-row"><span>Retrouvées (30j)</span><span class="stat-val" style="color:var(--green)" id="sv-found">—</span></div>
+          <div class="stat-row"><span>Membres actifs</span><span class="stat-val" id="sv-users">—</span></div>
+          <div class="stat-row"><span>Aujourd'hui</span><span class="stat-val" id="sv-today">—</span></div>
+        </div>
+      </div>
+      <div style="margin-bottom:18px"><div class="sidebar-label">CLASSEMENT 🏆</div><div id="leaderboard"><div class="spinner spinner-sm"></div></div></div>
+      <div><div class="sidebar-label">GAGNER DES COINS</div>
+        <div class="coins-guide">🔁 Repartage → <span>+10 coins</span><br>📤 Partage → <span>+5 coins</span><br>📝 Signalement → <span>+20 coins</span><br>💬 Témoin → <span>+50 coins</span><br>✅ Retrouvé → <span>+200 coins</span></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL NOUVEAU SIGNALEMENT -->
+<div class="modal-overlay" id="new-post-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal modal-wide"><span class="modal-handle"></span>
+    <button class="modal-close" onclick="document.getElementById('new-post-modal').classList.remove('open')">✕</button>
+    <div class="modal-title">NOUVEAU SIGNALEMENT</div>
+    <form id="np-form" onsubmit="event.preventDefault()">
+      <div class="input-row">
+        <div class="input-group"><label class="input-label">Nom complet *</label><input class="input" id="np-name" name="personName" placeholder="Prénom Nom" autocomplete="off"></div>
+        <div class="input-group"><label class="input-label">Âge</label><input class="input" name="personAge" type="number" inputmode="numeric" placeholder="25" min="0" max="120"></div>
+      </div>
+      <div class="input-row">
+        <div class="input-group"><label class="input-label">Sexe</label><select class="input" name="personGender"><option value="">—</option><option value="homme">Homme</option><option value="femme">Femme</option><option value="autre">Autre</option></select></div>
+        <div class="input-group"><label class="input-label">Statut *</label><select class="input" name="urgency"><option value="normal">Normal</option><option value="urgent">Urgent</option><option value="critical">Critique</option></select></div>
+      </div>
+      <div class="input-row">
+        <div class="input-group"><label class="input-label">Localisation *</label><input class="input" name="lastSeen" id="np-loc" placeholder="Ville, quartier…"></div>
+        <div class="input-group"><label class="input-label">Date</label><input class="input" name="lastSeenDate" type="date"></div>
+      </div>
+      <div class="input-group"><label class="input-label">Photo</label>
+        <div class="upload-zone" onclick="document.getElementById('np-photo').click()"><div style="font-size:24px;margin-bottom:4px">📷</div>Cliquer pour ajouter une photo<input id="np-photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="prevPhoto(this)"></div>
+        <img id="np-prev" style="display:none;max-width:100%;border-radius:10px;margin-top:8px;max-height:180px;object-fit:cover">
+      </div>
+      <div class="input-group"><label class="input-label">Description *</label><textarea class="input" name="description" id="np-desc" placeholder="Taille, yeux, vêtements, circonstances…"></textarea></div>
+      <div class="input-row">
+        <div class="input-group"><label class="input-label">Tél. contact</label><input class="input" name="contactPhone" type="tel" inputmode="tel" placeholder="+237 6XX XXX XXX"></div>
+        <div class="input-group"><label class="input-label">Email contact</label><input class="input" name="contactEmail" type="email" inputmode="email" placeholder="urgence@email.com"></div>
+      </div>
+      <div class="input-group"><label class="input-label">🪙 Récompense en coins (depuis votre wallet)</label><input class="input" id="np-reward" name="rewardCoins" type="number" inputmode="numeric" min="0" placeholder="0"></div>
+      <div class="error-msg" id="np-err"></div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('new-post-modal').classList.remove('open')">Annuler</button>
+        <button type="button" class="btn btn-primary btn-lg" id="np-btn" onclick="submitPost()" style="flex:1">Publier</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- PAY MODAL -->
+<div class="modal-overlay" id="pay-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal"><span class="modal-handle"></span><button class="modal-close" onclick="document.getElementById('pay-modal').classList.remove('open')">✕</button>
+    <div class="modal-title">AJOUTER UNE RÉCOMPENSE</div>
+    <p style="color:var(--muted2);font-size:13px;margin-bottom:16px">Les coins sont distribués à ceux qui ont partagé si la personne est retrouvée.</p>
+    <div class="pay-options"><div class="pay-opt selected" data-provider="orange" onclick="selectProvider(this)"><div class="pay-opt-icon">🟠</div><div class="pay-opt-name">ORANGE MONEY</div></div><div class="pay-opt" data-provider="mtu" onclick="selectProvider(this)"><div class="pay-opt-icon">🟡</div><div class="pay-opt-name">MTN MONEY</div></div></div>
+    <div class="input-group"><label class="input-label">Montant (XAF)</label><input class="input" id="pay-amount" type="number" inputmode="numeric" placeholder="500, 1000, 5000…" min="100"></div>
+    <div class="input-group"><label class="input-label">Numéro Mobile Money</label><input class="input" id="pay-phone" type="tel" inputmode="tel" placeholder="6XXXXXXXX"></div>
+    <div class="error-msg" id="pay-error"></div>
+    <button class="btn btn-primary btn-full btn-lg" id="pay-submit-btn" onclick="submitPayment()" style="margin-top:12px">PAYER</button>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="bnav-item" data-page="home" onclick="location.href='../index.html'"><span class="bnav-icon">🏠</span><span>Accueil</span></button>
+  <button class="bnav-item active" data-page="feed" onclick="location.href='feed.html'"><span class="bnav-icon">🔍</span><span>Recherches</span></button>
+  <button class="bnav-post" onclick="openNewPost()"><div class="bnav-post-inner">＋</div></button>
+  <button class="bnav-item" data-page="messages" onclick="location.href='messages.html'"><span class="bnav-icon">💬</span><span>Messages</span></button>
+  <button class="bnav-item" data-page="profile" onclick="location.href='profile.html'"><span class="bnav-icon">👤</span><span>Profil</span></button>
+</nav>
+<div class="toast-stack" id="toast-stack"></div>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script>
+buildNav('feed');
+let currentFilter = 'all', currentPage = 1, hasMore = true, loading = false;
+
+const params = new URLSearchParams(location.search);
+if (params.get('search')) { document.getElementById('nav-search').value = params.get('search'); }
+if (params.get('newpost')) openNewPost();
+
+async function loadPosts(filter, pg, append) {
+  if (loading) return;
+  filter = filter || currentFilter; pg = pg || 1;
+  loading = true; currentFilter = filter; currentPage = pg;
+  const c = document.getElementById('posts-list');
+  if (!append) c.innerHTML = '<div class="spinner"></div>';
+  try {
+    const q = new URLSearchParams({ page: pg, limit: 10 });
+    if (filter === 'critical') q.set('urgency','critical');
+    else if (filter === 'urgent')   q.set('urgency','urgent');
+    else if (filter === 'found')    q.set('status','found');
+    else if (filter === 'mine') { const u = Auth.getUser(); if(u) q.set('userId',u.id); }
+    const search = document.getElementById('nav-search')?.value || document.getElementById('mobile-search')?.value;
+    if (search) q.set('search', search);
+    const d = await api.get('/posts?' + q);
+    hasMore = pg < d.pages;
+    const html = d.posts.map(p => renderPostCard(p)).join('');
+    if (append) { c.querySelector('.load-more')?.remove(); c.insertAdjacentHTML('beforeend', html); }
+    else c.innerHTML = html || '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">AUCUN RÉSULTAT</div></div>';
+    if (hasMore) c.insertAdjacentHTML('beforeend', `<button class="btn btn-ghost btn-full load-more" onclick="loadPosts('${filter}',${pg+1},true)" style="margin-top:8px">Charger plus…</button>`);
+  } catch (err) { if(!append) c.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Erreur</div><div style="color:var(--muted);font-size:13px">${esc(err.message)}</div></div>`; }
+  loading = false;
+}
+
+function setFilter(f, btn) {
+  document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadPosts(f);
+}
+
+let searchT;
+function onSearch(val) {
+  clearTimeout(searchT);
+  searchT = setTimeout(() => loadPosts(currentFilter, 1, false), 400);
+}
+
+async function loadSidebar() {
+  try {
+    const d = await api.get('/settings/admin/stats');
+    const s = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+    s('sv-missing',(d.totalMissing||0).toLocaleString('fr'));
+    s('sv-found',(d.foundThisMonth||0).toLocaleString('fr'));
+    s('sv-users',(d.activeUsers||0).toLocaleString('fr'));
+    s('sv-today',(d.reportsToday||0).toLocaleString('fr'));
+  } catch(_) {}
+  try {
+    const d = await api.get('/users/admin/list?limit=3');
+    const lb = document.getElementById('leaderboard');
+    const m=['🥇','🥈','🥉'],c=['var(--gold)','#C0C0C0','#CD7F32'];
+    lb.innerHTML = (d.users||[]).slice(0,3).map((u,i)=>`<div class="lb-item" onclick="location.href='profile.html?id=${u.id}'">
+      <div class="lb-rank" style="color:${c[i]}">${m[i]}</div>
+      <div class="av av-sm">${initials(u.full_name)}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700">${esc(u.full_name)}</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gold)">🪙 ${(u.coins||0).toLocaleString('fr')}</div></div>
+      <span class="badge badge-gold">${u.badge||'Membre'}</span>
+    </div>`).join('');
+  } catch(_) {}
+}
+
+function prevPhoto(inp) { const pr=document.getElementById('np-prev'); if(inp.files[0]&&pr){const r=new FileReader();r.onload=e=>{pr.src=e.target.result;pr.style.display='block'};r.readAsDataURL(inp.files[0]);} }
+
+async function submitPost() {
+  if (!requireAuth()) return;
+  const name = document.getElementById('np-name').value.trim();
+  const loc  = document.getElementById('np-loc').value.trim();
+  const desc = document.getElementById('np-desc').value.trim();
+  const errEl = document.getElementById('np-err'), btn = document.getElementById('np-btn');
+  if (!name || !loc || !desc) { errEl.textContent = 'Nom, localisation et description requis'; return; }
+  try {
+    btn.disabled = true; btn.textContent = 'Publication…';
+    const fd = new FormData(document.getElementById('np-form'));
+    const d  = await api.up('/posts', fd);
+    document.getElementById('new-post-modal').classList.remove('open');
+    document.getElementById('np-form').reset();
+    document.getElementById('np-prev').style.display = 'none';
+    errEl.textContent = '';
+    toast(`✅ Publié ! +${d.coinsEarned} coins 🪙`, 'coin');
+    const u = Auth.getUser(); if (u) updateNavCoins((u.coins||0) + d.coinsEarned);
+    loadPosts('all', 1, false);
+    setTimeout(() => { if(confirm('Ajouter une récompense Mobile Money ?')) openPayModal(d.post.id); }, 800);
+  } catch (e) { errEl.textContent = e.message; }
+  finally { btn.disabled = false; btn.textContent = 'Publier'; }
+}
+
+loadPosts();
+loadSidebar();
+</script>
+</body>
+</html>

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#E8312A">
+<meta name="description" content="Ensemble retrouvons les personnes disparues. Signalez, partagez, témoignez.">
+<title>WANTED — Ensemble, retrouvons-les</title>
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+<!-- NAV DESKTOP -->
+<nav class="topnav">
+  <button class="nav-logo" onclick="location.href='index.html'">Wanted <span class="nav-logo-badge">APP</span></button>
+  <div class="nav-links" id="nav-links"></div>
+  <div class="nav-search-wrap">
+    <span class="nav-search-icon">🔍</span>
+    <input class="nav-search" id="nav-search" placeholder="Rechercher un nom, une ville…" oninput="handleSearch(this.value)">
+  </div>
+  <div class="nav-right" id="nav-right"></div>
+</nav>
+
+<!-- NAV MOBILE -->
+<div class="mobile-topbar">
+  <button class="nav-logo" style="font-size:20px" onclick="location.href='index.html'">Wanted</button>
+  <div class="mobile-topbar-right">
+    <button class="btn-icon" onclick="document.getElementById('mobile-search-ov').classList.toggle('open')">🔍</button>
+    <div id="mobile-right"></div>
+  </div>
+</div>
+<div class="mobile-search-ov" id="mobile-search-ov">
+  <input class="mobile-search-inp" placeholder="Rechercher…" oninput="handleSearch(this.value)">
+  <button class="btn btn-ghost btn-sm" onclick="document.getElementById('mobile-search-ov').classList.remove('open')">✕</button>
+</div>
+
+<!-- NOTIF PANEL -->
+<div id="notif-panel" class="notif-panel">
+  <div class="notif-hd">Notifications <span class="notif-mark" onclick="markNotifsRead()">Tout lire</span></div>
+  <div id="notif-list"></div>
+</div>
+
+<!-- PAGE -->
+<div style="padding-top:var(--nav-h);padding-bottom:var(--bottom-h);min-height:100vh">
+
+  <!-- HERO BANNER (style Royelle) -->
+  <div class="hero-section">
+    <div class="hero-banner">
+      <div class="hero-text">
+        <div class="hero-greeting">Bienvenue sur <em>Wanted</em></div>
+        <div class="hero-sub">Signalez les disparitions, partagez les avis de recherche, entrez en contact avec les témoins. <a href="pages/feed.html">Voir les recherches →</a></div>
+        <button class="hero-btn" onclick="openNewPost()">＋ Signaler une disparition</button>
+      </div>
+      <div class="hero-visual">
+        <div class="mini-cards">
+          <div class="mini-card">
+            <div class="mini-card-label">Avis de recherche</div>
+            <div class="mini-card-name">Emma Rousseau</div>
+            <div class="mini-card-info">17 ans · Paris, France</div>
+            <div class="mini-card-status">RECHERCHÉE</div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-card-label">Bonne nouvelle</div>
+            <div class="mini-card-name">Thomas Girard</div>
+            <div class="mini-card-info">45 ans · Lyon, France</div>
+            <div class="mini-card-status">✅ RETROUVÉ</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI CARDS (style Royelle rooms) -->
+    <div class="hero-stats">
+      <div class="hstat-card cr fade-up">
+        <div class="hstat-icon">🔍</div>
+        <div class="hstat-label">Personnes recherchées</div>
+        <div class="hstat-val" id="hs-missing">—</div>
+        <div class="hstat-trend">▲ En cours</div>
+      </div>
+      <div class="hstat-card cg fade-up">
+        <div class="hstat-icon">✅</div>
+        <div class="hstat-label">Retrouvées ce mois</div>
+        <div class="hstat-val" id="hs-found">—</div>
+        <div class="hstat-trend">▲ Grâce à la communauté</div>
+      </div>
+      <div class="hstat-card cb fade-up">
+        <div class="hstat-icon">👥</div>
+        <div class="hstat-label">Membres actifs</div>
+        <div class="hstat-val" id="hs-users">—</div>
+        <div class="hstat-trend">▲ Total inscrits</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="section-wrap">
+    <div class="section-header">
+      <div>
+        <div class="section-eyebrow">Comment ça marche</div>
+        <div class="section-title">4 étapes simples</div>
+      </div>
+    </div>
+    <div class="hiw-grid">
+      <div class="hiw-card fade-up">
+        <div class="hiw-icon-wrap">📸</div>
+        <div class="hiw-name">Signalez</div>
+        <div class="hiw-desc">Publiez un avis avec photo, description et contact d'urgence.</div>
+      </div>
+      <div class="hiw-card fade-up">
+        <div class="hiw-icon-wrap">🔁</div>
+        <div class="hiw-name">Partagez</div>
+        <div class="hiw-desc">Repartagez dans votre réseau. Chaque action rapporte des coins.</div>
+      </div>
+      <div class="hiw-card fade-up">
+        <div class="hiw-icon-wrap">💬</div>
+        <div class="hiw-name">Témoignez</div>
+        <div class="hiw-desc">Vous avez vu quelqu'un ? Contactez la famille directement.</div>
+      </div>
+      <div class="hiw-card fade-up">
+        <div class="hiw-icon-wrap">🏆</div>
+        <div class="hiw-name">Récompenses</div>
+        <div class="hiw-desc">Gagnez des coins, retirez via Orange Money ou MTN.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DERNIERS SIGNALEMENTS -->
+  <div class="section-wrap">
+    <div class="section-header">
+      <div>
+        <div class="section-eyebrow">Derniers signalements</div>
+        <div class="section-title">Avis de recherche récents</div>
+      </div>
+      <a class="view-all" onclick="location.href='pages/feed.html'">Voir tout →</a>
+    </div>
+    <div id="recent-posts"><div class="spinner"></div></div>
+  </div>
+
+  <!-- AMENITIES TICKER (style Royelle) -->
+  <div class="amenities-bar">
+    <div class="amenities-inner">
+      <div class="amenity-item"><span class="amenity-sep">✦</span> Inscription gratuite</div>
+      <div class="amenity-item"><span class="amenity-sep">✦</span> Coins réels à gagner</div>
+      <div class="amenity-item"><span class="amenity-sep">✦</span> Orange Money & MTN</div>
+      <div class="amenity-item"><span class="amenity-sep">✦</span> Communauté active</div>
+      <div class="amenity-item"><span class="amenity-sep">✦</span> Messagerie directe</div>
+      <div class="amenity-item"><span class="amenity-sep">✦</span> Accessible 24/7</div>
+      <div class="amenity-item"><span class="amenity-sep">✦</span> Inscription gratuite</div>
+      <div class="amenity-item"><span class="amenity-sep">✦</span> Coins réels à gagner</div>
+      <div class="amenity-item"><span class="amenity-sep">✦</span> Orange Money & MTN</div>
+      <div class="amenity-item"><span class="amenity-sep">✦</span> Communauté active</div>
+      <div class="amenity-item"><span class="amenity-sep">✦</span> Messagerie directe</div>
+      <div class="amenity-item"><span class="amenity-sep">✦</span> Accessible 24/7</div>
+    </div>
+  </div>
+
+  <div style="padding:48px var(--page-pad);text-align:center;max-width:500px;margin:0 auto">
+    <div class="section-eyebrow">Prêt à aider ?</div>
+    <div style="font-family:'Fraunces',serif;font-size:clamp(24px,6vw,32px);font-weight:700;margin:8px 0 12px">Faites une réservation.<br><span style="color:var(--red)">Sauvez une vie.</span></div>
+    <div style="font-size:13px;color:var(--text-soft);margin-bottom:22px;line-height:1.6">Rejoignez des milliers de membres et aidez à retrouver des personnes disparues.</div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary btn-lg" onclick="openNewPost()">＋ Signaler</button>
+      <button class="btn btn-ghost btn-lg" onclick="location.href='pages/feed.html'">Voir les recherches</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOUVEAU SIGNALEMENT -->
+<div class="modal-overlay" id="new-post-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal modal-wide">
+    <span class="modal-handle"></span>
+    <button class="modal-close" onclick="document.getElementById('new-post-modal').classList.remove('open')">✕</button>
+    <div class="modal-title">Nouveau signalement</div>
+    <form id="np-form" onsubmit="event.preventDefault()">
+      <div class="input-row">
+        <div class="input-group"><label class="input-label">Nom complet *</label><input class="input" id="np-name" name="personName" placeholder="Prénom Nom" autocomplete="off"></div>
+        <div class="input-group"><label class="input-label">Âge</label><input class="input" name="personAge" type="number" inputmode="numeric" placeholder="25" min="0" max="120"></div>
+      </div>
+      <div class="input-row">
+        <div class="input-group"><label class="input-label">Sexe</label><select class="input" name="personGender"><option value="">—</option><option value="homme">Homme</option><option value="femme">Femme</option><option value="autre">Autre</option></select></div>
+        <div class="input-group"><label class="input-label">Niveau d'urgence *</label><select class="input" name="urgency"><option value="normal">Normal</option><option value="urgent">Urgent</option><option value="critical">Critique</option></select></div>
+      </div>
+      <div class="input-row">
+        <div class="input-group"><label class="input-label">Dernière localisation *</label><input class="input" name="lastSeen" id="np-loc" placeholder="Ville, quartier…"></div>
+        <div class="input-group"><label class="input-label">Date de disparition</label><input class="input" name="lastSeenDate" type="date"></div>
+      </div>
+      <div class="input-group"><label class="input-label">Photo de la personne</label>
+        <div class="upload-zone" onclick="document.getElementById('np-photo').click()"><div style="font-size:24px;margin-bottom:5px">📷</div>Cliquer pour ajouter une photo (JPG, PNG, max 5 Mo)<input id="np-photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="prevNpPhoto(this)"></div>
+        <img id="np-photo-prev" style="display:none;max-width:100%;border-radius:10px;margin-top:10px;max-height:200px;object-fit:cover">
+      </div>
+      <div class="input-group"><label class="input-label">Description & circonstances *</label><textarea class="input" name="description" id="np-desc" placeholder="Taille, couleur des yeux, vêtements, circonstances…"></textarea></div>
+      <div class="input-row">
+        <div class="input-group"><label class="input-label">Tél. contact</label><input class="input" name="contactPhone" type="tel" inputmode="tel" placeholder="+237 6XX XXX XXX"></div>
+        <div class="input-group"><label class="input-label">Email contact</label><input class="input" name="contactEmail" type="email" inputmode="email" placeholder="urgence@email.com"></div>
+      </div>
+      <div class="input-group"><label class="input-label">🪙 Récompense (depuis votre wallet)</label><input class="input" name="rewardCoins" type="number" inputmode="numeric" min="0" placeholder="0 coins"></div>
+      <div class="error-msg" id="np-err"></div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('new-post-modal').classList.remove('open')">Annuler</button>
+        <button type="button" class="btn btn-primary btn-lg" id="np-btn" onclick="submitPost()" style="flex:1">Publier</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- PAY MODAL -->
+<div class="modal-overlay" id="pay-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <button class="modal-close" onclick="document.getElementById('pay-modal').classList.remove('open')">✕</button>
+    <div class="modal-title">Ajouter une récompense</div>
+    <p style="color:var(--text-soft);font-size:13px;margin-bottom:16px">Les coins sont distribués aux personnes qui ont partagé si la personne est retrouvée.</p>
+    <div class="pay-options">
+      <div class="pay-opt selected" data-provider="orange" onclick="selectProvider(this)"><div class="pay-opt-icon">🟠</div><div class="pay-opt-name">Orange Money</div></div>
+      <div class="pay-opt" data-provider="mtu" onclick="selectProvider(this)"><div class="pay-opt-icon">🟡</div><div class="pay-opt-name">MTN Money</div></div>
+    </div>
+    <div class="input-group"><label class="input-label">Montant (XAF)</label><input class="input" id="pay-amount" type="number" inputmode="numeric" placeholder="500, 1000…" min="100"></div>
+    <div class="input-group"><label class="input-label">Numéro Mobile Money</label><input class="input" id="pay-phone" type="tel" inputmode="tel" placeholder="6XXXXXXXX"></div>
+    <div class="error-msg" id="pay-error"></div>
+    <button class="btn btn-primary btn-full btn-lg" id="pay-submit-btn" onclick="submitPayment()" style="margin-top:12px">Payer</button>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="bnav-item active" data-page="home" onclick="location.href='index.html'"><span class="bnav-icon">🏠</span><span>Accueil</span></button>
+  <button class="bnav-item" data-page="feed" onclick="location.href='pages/feed.html'"><span class="bnav-icon">🔍</span><span>Recherches</span></button>
+  <button class="bnav-post" onclick="openNewPost()"><div class="bnav-post-inner">＋</div></button>
+  <button class="bnav-item" data-page="messages" onclick="location.href='pages/messages.html'"><span class="bnav-icon">💬</span><span>Messages</span></button>
+  <button class="bnav-item" data-page="profile" onclick="location.href='pages/profile.html'"><span class="bnav-icon">👤</span><span>Profil</span></button>
+</nav>
+
+<div class="toast-stack" id="toast-stack"></div>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script>
+buildNav('home');
+
+async function loadRecentPosts() {
+  try {
+    const d = await api.get('/posts?limit=4');
+    const c = document.getElementById('recent-posts');
+    if (!d.posts.length) { c.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">Aucun signalement</div></div>'; return; }
+    c.innerHTML = '<div style="display:grid;grid-template-columns:1fr;gap:0">' + d.posts.map(p=>renderPostCard(p)).join('') + '</div>';
+  } catch(_) { document.getElementById('recent-posts').innerHTML=''; }
+}
+@media(min-width:768px){#recent-posts-grid{grid-template-columns:1fr 1fr}}
+
+async function loadStats() {
+  try {
+    const d = await api.get('/settings/admin/stats');
+    const s = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+    s('hs-missing',(d.totalMissing||0).toLocaleString('fr'));
+    s('hs-found',(d.foundThisMonth||0).toLocaleString('fr'));
+    s('hs-users',(d.activeUsers||0).toLocaleString('fr'));
+  } catch(_) {}
+}
+
+function prevNpPhoto(inp) {
+  const pr=document.getElementById('np-photo-prev');
+  if(inp.files[0]&&pr){const r=new FileReader();r.onload=e=>{pr.src=e.target.result;pr.style.display='block'};r.readAsDataURL(inp.files[0]);}
+}
+
+async function submitPost() {
+  if (!requireAuth()) return;
+  const name=document.getElementById('np-name').value.trim();
+  const loc=document.getElementById('np-loc').value.trim();
+  const desc=document.getElementById('np-desc').value.trim();
+  const err=document.getElementById('np-err'), btn=document.getElementById('np-btn');
+  if (!name||!loc||!desc) { err.textContent='Nom, localisation et description requis'; return; }
+  try {
+    btn.disabled=true; btn.textContent='Publication…';
+    const fd=new FormData(document.getElementById('np-form'));
+    const d=await api.up('/posts',fd);
+    document.getElementById('new-post-modal').classList.remove('open');
+    document.getElementById('np-form').reset();
+    document.getElementById('np-photo-prev').style.display='none';
+    toast(`✅ Publié ! +${d.coinsEarned} coins 🪙`,'coin');
+    const u=Auth.getUser(); if(u) updateNavCoins((u.coins||0)+d.coinsEarned);
+    loadRecentPosts();
+    setTimeout(()=>{ if(confirm('Ajouter une récompense Mobile Money ?')) openPayModal(d.post.id); },1000);
+  } catch(e) { err.textContent=e.message; }
+  finally { btn.disabled=false; btn.textContent='Publier'; }
+}
+
+loadStats(); loadRecentPosts();
+</script>
+</body>
+</html>

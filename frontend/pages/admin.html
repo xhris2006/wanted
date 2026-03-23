@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Admin — WANTED</title>
+<link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+<!-- NAV DESKTOP -->
+<nav class="topnav">
+  <button class="nav-logo" onclick="location.href='../index.html'">Wanted</button>
+  <div class="nav-links" id="nav-links"></div>
+  <div class="nav-right" id="nav-right"></div>
+</nav>
+<!-- NAV MOBILE -->
+<div class="mobile-topbar">
+  <button class="nav-logo" style="font-size:20px" onclick="location.href='../index.html'">Wanted</button>
+  <div class="mobile-topbar-right"><div id="mobile-right"></div></div>
+</div>
+<div id="notif-panel" class="notif-panel">
+  <div class="notif-hd">Notifications <span class="notif-mark" onclick="markNotifsRead()">Tout lire</span></div>
+  <div id="notif-list"></div>
+</div>
+
+<main style="padding-top:var(--nav-h);padding-bottom:var(--bottom-h);min-height:100vh">
+  <div class="admin-wrap">
+
+    <!-- Accès refusé -->
+    <div id="admin-no-access" style="display:none">
+      <div class="empty-state">
+        <div class="empty-icon">🔒</div>
+        <div class="empty-title">Accès réservé</div>
+        <p style="color:var(--text-soft);font-size:13px">Cette page est réservée aux administrateurs.</p>
+        <button class="btn btn-primary" style="margin-top:16px" onclick="location.href='../index.html'">Retour à l'accueil</button>
+      </div>
+    </div>
+
+    <!-- Chargement -->
+    <div id="admin-loading"><div class="spinner"></div></div>
+
+    <!-- Contenu admin -->
+    <div id="admin-content" style="display:none">
+      <div style="margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div>
+          <div class="admin-title">Dashboard <span>Admin</span></div>
+          <div style="color:var(--text-soft);font-size:13px;margin-top:2px">Gestion de la plateforme WANTED</div>
+        </div>
+        <span id="admin-badge" class="badge badge-red" style="font-size:12px">Admin</span>
+      </div>
+
+      <!-- Onglets -->
+      <div class="admin-tabs" id="admin-tabs">
+        <button class="admin-tab-btn active" data-tab="overview" onclick="switchTab('overview',this)">📊 Vue d'ensemble</button>
+        <button class="admin-tab-btn" data-tab="users" onclick="switchTab('users',this)">👥 Utilisateurs</button>
+        <button class="admin-tab-btn" data-tab="reports" onclick="switchTab('reports',this)">🔍 Signalements</button>
+        <button class="admin-tab-btn" data-tab="payments" onclick="switchTab('payments',this)">💳 Paiements</button>
+        <button class="admin-tab-btn" data-tab="config" onclick="switchTab('config',this)">⚙️ Configuration</button>
+      </div>
+
+      <div id="admin-pane"></div>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL EDIT USER -->
+<div class="modal-overlay" id="user-edit-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <button class="modal-close" onclick="document.getElementById('user-edit-modal').classList.remove('open')">✕</button>
+    <div class="modal-title">Modifier l'utilisateur</div>
+    <input type="hidden" id="ue-id">
+    <div class="input-group"><label class="input-label">Nom complet</label><input class="input" id="ue-name"></div>
+    <div class="input-group"><label class="input-label">Email</label><input class="input" id="ue-email" type="email"></div>
+    <div class="input-group"><label class="input-label">Ville</label><input class="input" id="ue-city"></div>
+    <div class="input-group"><label class="input-label">Rôle</label>
+      <select class="input" id="ue-role">
+        <option value="user">Utilisateur</option>
+        <option value="moderator">Modérateur</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin:8px 0">
+      <div><div style="font-weight:600;font-size:14px">Bannir cet utilisateur</div><div style="font-size:12px;color:var(--text-soft)">Le compte sera désactivé</div></div>
+      <button class="toggle" id="ue-banned-toggle" onclick="this.classList.toggle('on')"></button>
+    </div>
+    <div class="input-group"><label class="input-label">Raison du ban</label><input class="input" id="ue-ban-reason" placeholder="Motif…"></div>
+    <div class="error-msg" id="ue-err"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-danger btn-sm" onclick="deleteUser()">🗑 Supprimer</button>
+      <button class="btn btn-primary btn-lg" id="ue-btn" onclick="saveUser()" style="flex:1">Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="bnav-item" onclick="location.href='../index.html'"><span class="bnav-icon">🏠</span><span>Accueil</span></button>
+  <button class="bnav-item" onclick="location.href='feed.html'"><span class="bnav-icon">🔍</span><span>Recherches</span></button>
+  <button class="bnav-post" onclick="location.href='feed.html?newpost=1'"><div class="bnav-post-inner">＋</div></button>
+  <button class="bnav-item" onclick="location.href='messages.html'"><span class="bnav-icon">💬</span><span>Messages</span></button>
+  <button class="bnav-item" onclick="location.href='profile.html'"><span class="bnav-icon">👤</span><span>Profil</span></button>
+</nav>
+<div class="toast-stack" id="toast-stack"></div>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script>
+buildNav('admin');
+
+async function initAdmin() {
+  const me = Auth.getUser();
+  document.getElementById('admin-loading').style.display = 'none';
+  if (!me || me.role !== 'admin') {
+    // Essayer de recharger depuis l'API
+    if (Auth.isLoggedIn()) {
+      try {
+        const d = await api.get('/auth/me');
+        Auth.setUser(d.user);
+        if (d.user.role !== 'admin') { showNoAccess(); return; }
+        showAdmin(d.user);
+      } catch(_) { showNoAccess(); }
+    } else { showNoAccess(); }
+  } else {
+    showAdmin(me);
+  }
+}
+
+function showNoAccess() {
+  document.getElementById('admin-no-access').style.display = 'block';
+}
+
+function showAdmin(user) {
+  document.getElementById('admin-content').style.display = 'block';
+  document.getElementById('admin-badge').textContent = user.full_name + ' · Admin';
+  switchTab('overview', document.querySelector('[data-tab="overview"]'));
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const pane = document.getElementById('admin-pane');
+  pane.innerHTML = '<div class="spinner"></div>';
+  const fns = { overview: renderOverview, users: renderUsers, reports: renderReports, payments: renderPayments, config: renderConfig };
+  (fns[tab] || renderOverview)(pane);
+}
+
+async function renderOverview(pane) {
+  try {
+    const d = await api.get('/settings/admin/stats');
+    pane.innerHTML = `
+      <div class="kpi-grid">
+        <div class="kpi-card cr"><div class="kpi-label">Recherchées</div><div class="kpi-val">${(d.totalMissing||0).toLocaleString('fr')}</div><div class="kpi-trend">En cours</div></div>
+        <div class="kpi-card cg"><div class="kpi-label">Retrouvées (30j)</div><div class="kpi-val">${(d.foundThisMonth||0).toLocaleString('fr')}</div><div class="kpi-trend">Ce mois</div></div>
+        <div class="kpi-card cb"><div class="kpi-label">Membres</div><div class="kpi-val">${(d.activeUsers||0).toLocaleString('fr')}</div><div class="kpi-trend">Total</div></div>
+        <div class="kpi-card co"><div class="kpi-label">Aujourd'hui</div><div class="kpi-val">${(d.reportsToday||0).toLocaleString('fr')}</div><div class="kpi-trend">24h</div></div>
+        <div class="kpi-card cgold"><div class="kpi-label">Revenus total</div><div class="kpi-val" style="font-size:22px">${(d.totalRevenue||0).toLocaleString('fr')} XAF</div><div class="kpi-trend">Cumulé</div></div>
+      </div>`;
+  } catch(err) { pane.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">${esc(err.message)}</div></div>`; }
+}
+
+async function renderUsers(pane) {
+  try {
+    const d = await api.get('/users/admin/list?limit=100');
+    pane.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+        <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:700">${d.users.length} utilisateurs</div>
+        <input class="input" placeholder="Rechercher…" oninput="filterUserTable(this.value)" style="max-width:200px;padding:8px 12px;font-size:13px">
+      </div>
+      <div class="data-table" style="overflow-x:auto">
+        <div class="dt-hd gc6" style="min-width:600px"><span>Utilisateur</span><span>Ville</span><span>Rôle</span><span>Coins</span><span>Statut</span><span></span></div>
+        <div id="users-tbody">
+        ${d.users.map(u=>`
+          <div class="dt-row gc6" id="urow-${u.id}" style="min-width:600px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="av av-sm av-circle" style="background:var(--red);color:white;font-size:11px;font-weight:700;flex-shrink:0">${initials(u.full_name)}</div>
+              <div style="min-width:0">
+                <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u.full_name)}</div>
+                <div style="font-size:11px;color:var(--text-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u.email||'')}</div>
+              </div>
+            </div>
+            <span style="color:var(--text-soft);font-size:12px">${u.city||'—'}</span>
+            <span class="badge ${u.role==='admin'?'badge-red':u.role==='moderator'?'badge-blue':'badge-muted'}">${u.role}</span>
+            <span style="font-size:12px;font-weight:700;color:var(--orange)">🪙 ${(u.coins||0).toLocaleString('fr')}</span>
+            <span class="badge ${u.is_banned?'badge-red':'badge-green'}">${u.is_banned?'Banni':'Actif'}</span>
+            <button class="btn btn-ghost btn-sm" onclick='openUserEdit(${JSON.stringify(u)})'>✏️</button>
+          </div>`).join('')}
+        </div>
+      </div>`;
+  } catch(err) { pane.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">${esc(err.message)}</div></div>`; }
+}
+
+async function renderReports(pane) {
+  try {
+    const d = await api.get('/posts?limit=50');
+    pane.innerHTML = `
+      <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:700;margin-bottom:14px">${d.total||d.posts.length} signalements</div>
+      <div class="data-table" style="overflow-x:auto">
+        <div class="dt-hd gc5" style="min-width:560px"><span>Personne</span><span>Localisation</span><span>Date</span><span>Urgence</span><span>Statut</span></div>
+        ${d.posts.map(p=>`
+          <div class="dt-row gc5" style="min-width:560px;cursor:pointer" onclick="location.href='post-detail.html?id=${p.id}'">
+            <div><div style="font-weight:700;font-size:13px">${esc(p.person_name)}</div><div style="font-size:11px;color:var(--text-soft)">${p.person_age?p.person_age+' ans':''} ${p.person_gender||''}</div></div>
+            <span style="color:var(--text-soft);font-size:12px">${esc(p.last_seen)}</span>
+            <span style="font-size:11px;color:var(--text-muted)">${fmt(p.created_at)}</span>
+            <span class="badge ${p.urgency==='critical'?'badge-red':p.urgency==='urgent'?'badge-orange':'badge-muted'}">${p.urgency==='critical'?'Critique':p.urgency==='urgent'?'Urgent':'Normal'}</span>
+            <span class="badge ${p.status==='found'?'badge-green':'badge-red'}">${p.status==='found'?'Retrouvé':'Recherché'}</span>
+          </div>`).join('')}
+      </div>`;
+  } catch(err) { pane.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">${esc(err.message)}</div></div>`; }
+}
+
+async function renderPayments(pane) {
+  try {
+    const d = await api.get('/payments/history');
+    if (!d.transactions.length) { pane.innerHTML='<div class="empty-state"><div class="empty-icon">💳</div><div class="empty-title">Aucune transaction</div></div>'; return; }
+    pane.innerHTML = `
+      <div class="data-table" style="overflow-x:auto">
+        <div class="dt-hd" style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;min-width:480px;padding:10px 16px;background:var(--surface2);border-bottom:1.5px solid var(--border);font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:1px;font-weight:700;gap:10px">
+          <span>Utilisateur</span><span>Type</span><span>Montant</span><span>Statut</span>
+        </div>
+        ${d.transactions.map(t=>`
+          <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;min-width:480px;padding:11px 16px;border-bottom:1px solid var(--border);font-size:12px;align-items:center;gap:10px">
+            <span style="color:var(--text-soft);font-size:11px">${esc(t.user_id?.slice(0,8))}…</span>
+            <span class="badge ${t.type==='deposit'?'badge-green':'badge-orange'}">${t.type==='deposit'?'Dépôt':'Retrait'}</span>
+            <span style="font-weight:700;color:var(--orange)">${(t.amount_xaf||0).toLocaleString('fr')} XAF</span>
+            <span class="badge ${t.status==='success'?'badge-green':t.status==='failed'?'badge-red':'badge-muted'}">${t.status}</span>
+          </div>`).join('')}
+      </div>`;
+  } catch(err) { pane.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">${esc(err.message)}</div></div>`; }
+}
+
+async function renderConfig(pane) {
+  try {
+    const d = await api.get('/settings');
+    const s = d.settings;
+    pane.innerHTML = `
+      <div class="s-section">
+        <div class="s-hd">🌐 Site</div>
+        <div class="s-body">
+          <div class="input-row">
+            <div class="input-group"><label class="input-label">Nom du site</label><input class="input" id="cfg-name" value="${esc(s.site_name||'WANTED')}"></div>
+            <div class="input-group"><label class="input-label">Slogan</label><input class="input" id="cfg-desc" value="${esc(s.site_description||'')}"></div>
+          </div>
+        </div>
+      </div>
+      <div class="s-section">
+        <div class="s-hd">🪙 Coins par action</div>
+        <div class="s-body">
+          <div class="input-row">
+            <div class="input-group"><label class="input-label">Repartage</label><input class="input" id="cfg-repost" type="number" value="${s.coins_per_repost||10}"></div>
+            <div class="input-group"><label class="input-label">Partage</label><input class="input" id="cfg-share" type="number" value="${s.coins_per_share||5}"></div>
+            <div class="input-group"><label class="input-label">Signalement</label><input class="input" id="cfg-post" type="number" value="${s.coins_per_post||20}"></div>
+            <div class="input-group"><label class="input-label">Si retrouvé</label><input class="input" id="cfg-found" type="number" value="${s.coins_per_found||200}"></div>
+          </div>
+          <div class="input-row">
+            <div class="input-group"><label class="input-label">Bienvenue</label><input class="input" id="cfg-welcome" type="number" value="${s.coins_welcome||100}"></div>
+            <div class="input-group"><label class="input-label">Min. retrait</label><input class="input" id="cfg-minwd" type="number" value="${s.min_withdraw_coins||500}"></div>
+            <div class="input-group"><label class="input-label">1 coin = ? XAF</label><input class="input" id="cfg-coinval" type="number" value="${s.coin_value_xaf||1}"></div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-lg" onclick="saveConfig()">💾 Sauvegarder la configuration</button>`;
+  } catch(err) { pane.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">${esc(err.message)}</div></div>`; }
+}
+
+async function saveConfig() {
+  const g = id => document.getElementById(id)?.value;
+  try {
+    await api.put('/settings', {
+      site_name:g('cfg-name'), site_description:g('cfg-desc'),
+      coins_per_repost:g('cfg-repost'), coins_per_share:g('cfg-share'),
+      coins_per_post:g('cfg-post'), coins_per_found:g('cfg-found'),
+      coins_welcome:g('cfg-welcome'), min_withdraw_coins:g('cfg-minwd'), coin_value_xaf:g('cfg-coinval')
+    });
+    toast('Configuration sauvegardée ✓','success');
+  } catch(err) { toast(err.message,'error'); }
+}
+
+function openUserEdit(u) {
+  document.getElementById('ue-id').value    = u.id;
+  document.getElementById('ue-name').value  = u.full_name||'';
+  document.getElementById('ue-email').value = u.email||'';
+  document.getElementById('ue-city').value  = u.city||'';
+  document.getElementById('ue-role').value  = u.role||'user';
+  document.getElementById('ue-ban-reason').value = u.ban_reason||'';
+  const tog = document.getElementById('ue-banned-toggle');
+  tog.classList.toggle('on', !!u.is_banned);
+  document.getElementById('user-edit-modal').classList.add('open');
+}
+
+async function saveUser() {
+  const id = document.getElementById('ue-id').value;
+  const btn = document.getElementById('ue-btn'), err = document.getElementById('ue-err');
+  try {
+    btn.disabled=true; btn.textContent='Sauvegarde…';
+    await api.put('/users/admin/'+id, {
+      fullName:  document.getElementById('ue-name').value,
+      email:     document.getElementById('ue-email').value,
+      city:      document.getElementById('ue-city').value,
+      role:      document.getElementById('ue-role').value,
+      isBanned:  document.getElementById('ue-banned-toggle').classList.contains('on'),
+      banReason: document.getElementById('ue-ban-reason').value
+    });
+    document.getElementById('user-edit-modal').classList.remove('open');
+    toast('Utilisateur mis à jour ✓','success');
+    switchTab('users', document.querySelector('[data-tab="users"]'));
+  } catch(e) { err.textContent=e.message; }
+  finally { btn.disabled=false; btn.textContent='Sauvegarder'; }
+}
+
+async function deleteUser() {
+  const id = document.getElementById('ue-id').value;
+  if (!confirm('Supprimer définitivement cet utilisateur ?')) return;
+  try {
+    await api.del('/users/admin/'+id);
+    document.getElementById('user-edit-modal').classList.remove('open');
+    toast('Utilisateur supprimé','info');
+    switchTab('users', document.querySelector('[data-tab="users"]'));
+  } catch(err) { toast(err.message,'error'); }
+}
+
+function filterUserTable(val) {
+  document.querySelectorAll('#users-tbody .dt-row').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(val.toLowerCase()) ? '' : 'none';
+  });
+}
+
+// Démarrage
+initAdmin();
+</script>
+</body>
+</html>

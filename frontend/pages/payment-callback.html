@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Paiement — WANTED</title>
+<link rel="stylesheet" href="../css/main.css">
+<style>body{font-family:'Plus Jakarta Sans',sans-serif}</style>
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-bg"></div>
+  <div class="auth-card" style="text-align:center">
+    <a class="auth-logo" href="../index.html">WANTED</a>
+    <div id="status-icon" style="font-size:56px;margin:16px 0">⏳</div>
+    <div class="auth-title" id="status-title">VÉRIFICATION…</div>
+    <div class="auth-sub" id="status-msg">Vérification du paiement en cours…</div>
+    <div class="spinner" id="sp" style="margin:20px auto"></div>
+    <button id="go-btn" class="btn btn-primary btn-full btn-lg" onclick="location.href='../index.html'" style="display:none;margin-top:16px">RETOUR À L'ACCUEIL</button>
+    <button id="profile-btn" class="btn btn-ghost btn-full" onclick="location.href='profile.html'" style="display:none;margin-top:8px">VOIR MES COINS</button>
+  </div>
+</div>
+<div class="toast-stack" id="toast-stack"></div>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script>
+const txId = new URLSearchParams(location.search).get('txId');
+
+async function checkStatus() {
+  if (!txId || !Auth.isLoggedIn()) {
+    showResult(false, 'Référence de transaction manquante.');
+    return;
+  }
+  try {
+    const d = await api.get('/payments/status/' + txId);
+    const tx = d.transaction;
+    if (tx.status === 'success') {
+      showResult(true, `🪙 ${tx.coins} coins crédités sur votre compte !`);
+      const u = Auth.getUser();
+      if (u) { u.coins = (u.coins || 0) + tx.coins; Auth.setUser(u); }
+    } else if (tx.status === 'pending') {
+      setTimeout(checkStatus, 3000);
+    } else {
+      showResult(false, 'Le paiement a échoué ou a été annulé.');
+    }
+  } catch(err) {
+    showResult(false, err.message);
+  }
+}
+
+function showResult(success, msg) {
+  document.getElementById('sp').style.display = 'none';
+  document.getElementById('status-icon').textContent = success ? '✅' : '❌';
+  document.getElementById('status-title').textContent = success ? 'PAIEMENT RÉUSSI' : 'PAIEMENT ÉCHOUÉ';
+  document.getElementById('status-msg').textContent = msg;
+  document.getElementById('go-btn').style.display = 'block';
+  if (success) document.getElementById('profile-btn').style.display = 'block';
+}
+
+checkStatus();
+</script>
+</body>
+</html>

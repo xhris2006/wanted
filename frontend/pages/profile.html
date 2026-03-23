@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Profil — WANTED</title>
+<link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+<!-- NAV DESKTOP -->
+<nav class="topnav">
+  <button class="nav-logo" onclick="location.href='../index.html'">Wanted</button>
+  <div class="nav-links" id="nav-links"></div>
+  <div class="nav-search-wrap"><span class="nav-search-icon">🔍</span><input class="nav-search" placeholder="Rechercher…" oninput="handleSearch(this.value)"></div>
+  <div class="nav-right" id="nav-right"></div>
+</nav>
+<!-- NAV MOBILE -->
+<div class="mobile-topbar">
+  <button class="btn-icon" onclick="history.back()" style="border:none">←</button>
+  <button class="nav-logo" style="font-size:20px" onclick="location.href='../index.html'">Wanted</button>
+  <div class="mobile-topbar-right"><div id="mobile-right"></div></div>
+</div>
+<div id="notif-panel" class="notif-panel">
+  <div class="notif-hd">Notifications <span class="notif-mark" onclick="markNotifsRead()">Tout lire</span></div>
+  <div id="notif-list"></div>
+</div>
+
+<main style="padding-top:var(--nav-h);padding-bottom:var(--bottom-h);min-height:100vh">
+  <div class="profile-wrap">
+    <div id="profile-container"><div class="spinner"></div></div>
+  </div>
+</main>
+
+<!-- EDIT PROFILE MODAL -->
+<div class="modal-overlay" id="edit-profile-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <button class="modal-close" onclick="document.getElementById('edit-profile-modal').classList.remove('open')">✕</button>
+    <div class="modal-title">Modifier mon profil</div>
+    <div class="input-group">
+      <label class="input-label">Photo de profil</label>
+      <div class="upload-zone" onclick="document.getElementById('av-input').click()">
+        <div style="font-size:22px;margin-bottom:4px">📷</div>
+        Cliquer pour changer la photo
+        <input id="av-input" type="file" accept="image/*" style="display:none" onchange="prevAv(this)">
+      </div>
+      <img id="av-prev" style="display:none;width:72px;height:72px;border-radius:50%;object-fit:cover;margin-top:8px">
+    </div>
+    <div class="input-group"><label class="input-label">Nom complet</label><input class="input" id="ep-name" placeholder="Prénom Nom"></div>
+    <div class="input-group"><label class="input-label">Ville</label><input class="input" id="ep-city" placeholder="Douala, Yaoundé…"></div>
+    <div class="input-group"><label class="input-label">Bio</label><textarea class="input" id="ep-bio" placeholder="Quelques mots…" style="min-height:70px"></textarea></div>
+    <div class="error-msg" id="ep-err"></div>
+    <div class="success-msg" id="ep-ok"></div>
+    <button class="btn btn-primary btn-full btn-lg" id="ep-btn" onclick="saveProfile()" style="margin-top:8px">Sauvegarder</button>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="modal-overlay" id="pwd-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <button class="modal-close" onclick="document.getElementById('pwd-modal').classList.remove('open')">✕</button>
+    <div class="modal-title">Changer le mot de passe</div>
+    <div class="input-group"><label class="input-label">Mot de passe actuel</label><input class="input" id="pw-cur" type="password" placeholder="••••••••"></div>
+    <div class="input-group"><label class="input-label">Nouveau mot de passe</label><input class="input" id="pw-new" type="password" placeholder="min. 8 caractères"></div>
+    <div class="error-msg" id="pw-err"></div>
+    <div class="success-msg" id="pw-ok"></div>
+    <button class="btn btn-primary btn-full btn-lg" id="pw-btn" onclick="changePassword()" style="margin-top:8px">Changer</button>
+  </div>
+</div>
+
+<!-- WITHDRAW MODAL -->
+<div class="modal-overlay" id="withdraw-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <button class="modal-close" onclick="document.getElementById('withdraw-modal').classList.remove('open')">✕</button>
+    <div class="modal-title">Retirer des coins</div>
+    <p id="wd-balance" style="color:var(--orange);font-weight:700;margin-bottom:16px;font-size:14px"></p>
+    <div class="pay-options">
+      <div class="pay-opt selected" data-provider="orange" onclick="selectProvider(this)"><div class="pay-opt-icon">🟠</div><div class="pay-opt-name">Orange Money</div></div>
+      <div class="pay-opt" data-provider="mtu" onclick="selectProvider(this)"><div class="pay-opt-icon">🟡</div><div class="pay-opt-name">MTN Money</div></div>
+    </div>
+    <div class="input-group"><label class="input-label">Coins à retirer (min. 500)</label><input class="input" id="wd-coins" type="number" inputmode="numeric" placeholder="500" min="500" oninput="document.getElementById('wd-equiv').textContent=this.value?'≈ '+(parseInt(this.value)||0)+' XAF':''"></div>
+    <div id="wd-equiv" style="font-size:12px;color:var(--text-soft);margin-top:-8px;margin-bottom:12px"></div>
+    <div class="input-group"><label class="input-label">Numéro Mobile Money</label><input class="input" id="wd-phone" type="tel" inputmode="tel" placeholder="6XXXXXXXX"></div>
+    <div class="error-msg" id="wd-err"></div>
+    <button class="btn btn-primary btn-full btn-lg" id="wd-btn" onclick="submitWithdraw()" style="margin-top:12px">Retirer</button>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="bnav-item" onclick="location.href='../index.html'"><span class="bnav-icon">🏠</span><span>Accueil</span></button>
+  <button class="bnav-item" onclick="location.href='feed.html'"><span class="bnav-icon">🔍</span><span>Recherches</span></button>
+  <button class="bnav-post" onclick="location.href='feed.html?newpost=1'"><div class="bnav-post-inner">＋</div></button>
+  <button class="bnav-item" onclick="location.href='messages.html'"><span class="bnav-icon">💬</span><span>Messages</span></button>
+  <button class="bnav-item active" data-page="profile"><span class="bnav-icon">👤</span><span>Profil</span></button>
+</nav>
+<div class="toast-stack" id="toast-stack"></div>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script>
+buildNav('profile');
+const urlParams = new URLSearchParams(location.search);
+const viewId = urlParams.get('id');
+const me = Auth.getUser();
+const isOwn = !viewId || viewId === me?.id;
+let userData = null, activeTab = 'posts';
+
+async function loadProfile() {
+  const uid = viewId || me?.id;
+  if (!uid) { location.href = 'login.html'; return; }
+  try {
+    // Recharger le user depuis l'API pour avoir les données fraîches
+    const d = await api.get('/users/' + uid);
+    userData = d.user;
+    // Si c'est moi, mettre à jour le cache local
+    if (isOwn && Auth.isLoggedIn()) {
+      const fresh = await api.get('/auth/me').catch(()=>null);
+      if (fresh) { userData = {...userData, ...fresh.user}; Auth.setUser(fresh.user); }
+    }
+    document.title = userData.full_name + ' — WANTED';
+    renderProfile(userData);
+    loadTab('posts');
+  } catch(err) {
+    document.getElementById('profile-container').innerHTML = `<div class="empty-state"><div class="empty-icon">❌</div><div class="empty-title">Profil introuvable</div><p style="color:var(--text-soft);font-size:13px">${esc(err.message)}</p></div>`;
+  }
+}
+
+function renderProfile(u) {
+  const init = initials(u.full_name);
+  const avColors = ['#E8312A','#2563EB','#16a34a','#ea580c','#8b5cf6'];
+  const avColor = avColors[init.charCodeAt(0) % avColors.length];
+
+  document.getElementById('profile-container').innerHTML = `
+    <!-- Bannière profil -->
+    <div class="profile-banner" style="margin-bottom:16px">
+      <div style="flex-shrink:0">
+        <div class="av av-xl av-circle" style="background:${u.avatar_url?'transparent':avColor};color:white;font-size:34px;font-weight:700;border:3px solid rgba(255,255,255,.2)">
+          ${u.avatar_url ? `<img src="${esc(u.avatar_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : init}
+        </div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div class="profile-name">${esc(u.full_name)}</div>
+        <div class="profile-meta">📍 ${esc(u.city||'Non renseigné')} · Membre depuis ${new Date(u.created_at).toLocaleDateString('fr',{month:'long',year:'numeric'})}</div>
+        ${u.bio ? `<div class="profile-bio">${esc(u.bio)}</div>` : ''}
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <span class="badge badge-gold">🏆 ${u.badge||'Membre'}</span>
+          ${u.role==='admin'?'<span class="badge badge-red">Admin</span>':''}
+          ${isOwn ? `
+            <button class="btn btn-ghost btn-sm" onclick="openEditProfile()" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:white">✏️ Modifier</button>
+            ${u.role==='admin'?`<button class="btn btn-sm" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:white" onclick="location.href='admin.html'">⚙️ Admin</button>`:''}
+          ` : (me ? `<button class="btn btn-ghost btn-sm" onclick="location.href='messages.html?userId=${u.id}&name=${encodeURIComponent(u.full_name)}'">💬 Message</button>` : '')}
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="pstats-grid">
+      <div class="pstat" onclick="loadTab('posts')">
+        <div class="pstat-val" style="color:var(--red)">${u.posts_count||0}</div>
+        <div class="pstat-lbl">Signalements</div>
+      </div>
+      <div class="pstat" onclick="loadTab('reposts')">
+        <div class="pstat-val" style="color:var(--green)">${u.reposts_count||0}</div>
+        <div class="pstat-lbl">Repartages</div>
+      </div>
+      <div class="pstat" onclick="isOwn?loadTab('coins'):null" style="${isOwn?'cursor:pointer':''}">
+        <div class="pstat-val" style="color:var(--orange)">🪙 ${(u.coins||0).toLocaleString('fr')}</div>
+        <div class="pstat-lbl">Coins</div>
+      </div>
+      ${isOwn ? `<div class="pstat" onclick="openWithdraw()" style="cursor:pointer"><div class="pstat-val" style="font-size:24px">💸</div><div class="pstat-lbl">Retirer</div></div>` : ''}
+    </div>
+
+    <!-- Onglets -->
+    <div class="profile-tabs">
+      <button class="profile-tab-btn active" id="tab-posts" onclick="loadTab('posts')">📝 Publications</button>
+      <button class="profile-tab-btn" id="tab-reposts" onclick="loadTab('reposts')">🔁 Repartages</button>
+      ${isOwn ? `
+        <button class="profile-tab-btn" id="tab-coins" onclick="loadTab('coins')">🪙 Coins</button>
+        <button class="profile-tab-btn" id="tab-settings" onclick="loadTab('settings')">⚙️ Paramètres</button>
+      ` : ''}
+    </div>
+
+    <div id="tab-content"><div class="spinner"></div></div>
+  `;
+}
+
+async function loadTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.profile-tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+tab)?.classList.add('active');
+  const c = document.getElementById('tab-content');
+  if (!c) return;
+  c.innerHTML = '<div class="spinner"></div>';
+  const uid = viewId || me?.id;
+
+  if (tab === 'posts') {
+    try {
+      const d = await api.get('/users/'+uid+'/posts?type=posts');
+      c.innerHTML = d.posts.length
+        ? d.posts.map(p => renderPostCard(p)).join('')
+        : '<div class="empty-state"><div class="empty-icon">📝</div><div class="empty-title">Aucune publication</div></div>';
+    } catch(_) { c.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Erreur</div></div>'; }
+
+  } else if (tab === 'reposts') {
+    try {
+      const d = await api.get('/users/'+uid+'/posts?type=reposts');
+      c.innerHTML = d.posts.length
+        ? d.posts.map(p => `
+            <div style="margin-bottom:10px">
+              ${p.original_poster_name ? `<div style="font-size:12px;color:var(--text-soft);padding:6px 12px;background:var(--surface2);border-radius:8px 8px 0 0;border:1.5px solid var(--border);border-bottom:none">🔁 Repartagé · <a href="post-detail.html?id=${p.original_id}" style="color:var(--red);font-weight:600">Original de ${esc(p.original_poster_name)}</a></div>` : ''}
+              ${renderPostCard(p)}
+            </div>`).join('')
+        : '<div class="empty-state"><div class="empty-icon">🔁</div><div class="empty-title">Aucun repartage</div></div>';
+    } catch(_) { c.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Erreur</div></div>'; }
+
+  } else if (tab === 'coins' && isOwn) {
+    try {
+      const d = await api.get('/users/me/coins');
+      c.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+          <div style="font-family:'Fraunces',serif;font-size:22px;font-weight:700;color:var(--orange)">🪙 ${(d.balance||0).toLocaleString('fr')} coins</div>
+          <button class="btn btn-gold btn-sm" onclick="openWithdraw()">💸 Retirer</button>
+        </div>
+        <div class="data-table">
+          ${d.transactions.length
+            ? d.transactions.map(t => `
+                <div style="display:flex;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;align-items:center">
+                  <div>
+                    <div style="font-weight:600">${esc(t.description||t.type)}</div>
+                    <div style="font-size:11px;color:var(--text-soft)">${ago(t.created_at)}</div>
+                  </div>
+                  <div style="font-weight:700;color:${t.amount>0?'var(--green)':'var(--red)'}">${t.amount>0?'+':''}${t.amount} 🪙</div>
+                </div>`).join('')
+            : '<div style="padding:20px;text-align:center;color:var(--text-soft);font-size:13px">Aucune transaction</div>'}
+        </div>`;
+    } catch(_) { c.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Erreur</div></div>'; }
+
+  } else if (tab === 'settings' && isOwn) {
+    c.innerHTML = `
+      <div class="s-section">
+        <div class="s-hd">🔐 Sécurité</div>
+        <div class="s-body">
+          <div class="s-row">
+            <div><div class="s-label">Mot de passe</div><div class="s-sub">Modifier votre mot de passe</div></div>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('pwd-modal').classList.add('open')">Modifier</button>
+          </div>
+        </div>
+      </div>
+      <div class="s-section">
+        <div class="s-hd" style="color:var(--red)">⚠️ Zone dangereuse</div>
+        <div class="s-body">
+          <div class="s-row">
+            <div><div class="s-label" style="color:var(--red)">Supprimer mon compte</div><div class="s-sub">Action irréversible — toutes vos données seront perdues</div></div>
+            <button class="btn btn-danger btn-sm" onclick="deleteAccount()">Supprimer</button>
+          </div>
+        </div>
+      </div>`;
+  }
+}
+
+function openEditProfile() {
+  if (!userData) return;
+  document.getElementById('ep-name').value = userData.full_name||'';
+  document.getElementById('ep-city').value = userData.city||'';
+  document.getElementById('ep-bio').value  = userData.bio||'';
+  document.getElementById('edit-profile-modal').classList.add('open');
+}
+
+function prevAv(inp) {
+  const pr = document.getElementById('av-prev');
+  if (inp.files[0] && pr) { const r=new FileReader(); r.onload=e=>{pr.src=e.target.result;pr.style.display='block'}; r.readAsDataURL(inp.files[0]); }
+}
+
+async function saveProfile() {
+  const btn=document.getElementById('ep-btn'),err=document.getElementById('ep-err'),ok=document.getElementById('ep-ok');
+  try {
+    btn.disabled=true; btn.textContent='Sauvegarde…';
+    const fd=new FormData();
+    fd.append('fullName',document.getElementById('ep-name').value.trim());
+    fd.append('city',document.getElementById('ep-city').value.trim());
+    fd.append('bio',document.getElementById('ep-bio').value.trim());
+    const av=document.getElementById('av-input')?.files[0]; if(av) fd.append('avatar',av);
+    const d=await api.putp('/users/me',fd);
+    Auth.setUser({...Auth.getUser(),...d.user});
+    ok.textContent='Profil mis à jour ✓'; err.textContent='';
+    toast('Profil mis à jour !','success');
+    document.getElementById('edit-profile-modal').classList.remove('open');
+    loadProfile();
+  } catch(e){err.textContent=e.message;}
+  finally{btn.disabled=false;btn.textContent='Sauvegarder';}
+}
+
+async function changePassword() {
+  const btn=document.getElementById('pw-btn'),err=document.getElementById('pw-err'),ok=document.getElementById('pw-ok');
+  const cur=document.getElementById('pw-cur').value, nw=document.getElementById('pw-new').value;
+  if (!cur||!nw||nw.length<8) { err.textContent='Remplissez tous les champs (min 8 caractères)'; return; }
+  try {
+    btn.disabled=true; btn.textContent='Changement…';
+    await api.put('/users/me/password',{currentPassword:cur,newPassword:nw});
+    ok.textContent='Mot de passe modifié ✓'; err.textContent='';
+    document.getElementById('pw-cur').value=''; document.getElementById('pw-new').value='';
+  } catch(e){err.textContent=e.message;}
+  finally{btn.disabled=false;btn.textContent='Changer';}
+}
+
+function openWithdraw() {
+  const u=Auth.getUser();
+  document.getElementById('wd-balance').textContent='Solde : '+(u?.coins||0).toLocaleString('fr')+' coins';
+  document.getElementById('withdraw-modal').classList.add('open');
+}
+
+async function submitWithdraw() {
+  const coins=parseInt(document.getElementById('wd-coins').value);
+  const phone=document.getElementById('wd-phone').value.trim();
+  const provider=document.querySelector('.pay-opt.selected')?.dataset.provider||'orange';
+  const err=document.getElementById('wd-err'),btn=document.getElementById('wd-btn');
+  if(!coins||coins<500){err.textContent='Minimum 500 coins';return;}
+  if(!phone){err.textContent='Numéro requis';return;}
+  try {
+    btn.disabled=true; btn.textContent='Traitement…';
+    const d=await api.post('/payments/withdraw',{coins,phone,provider});
+    document.getElementById('withdraw-modal').classList.remove('open');
+    toast('✅ Retrait de '+coins+' coins → '+d.amountXaf+' XAF traité !','success');
+    const u=Auth.getUser(); if(u){u.coins=(u.coins||0)-coins;Auth.setUser(u);updateNavCoins(u.coins);}
+    loadTab('coins');
+  } catch(e){err.textContent=e.message;}
+  finally{btn.disabled=false;btn.textContent='Retirer';}
+}
+
+async function deleteAccount() {
+  if(!confirm('Supprimer définitivement votre compte ?')) return;
+  try { await api.del('/users/me'); Auth.logout(); }
+  catch(e){toast(e.message,'error');}
+}
+
+loadProfile();
+</script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Messages — WANTED</title>
+<link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+<nav class="topnav"><button class="nav-logo" onclick="location.href='../index.html'">Wanted</button><div class="nav-links" id="nav-links"></div><div class="nav-right" id="nav-right"></div></nav>
+<div class="mobile-topbar"><button class="nav-logo" style="font-size:20px" onclick="location.href='../index.html'">Wanted</button><div class="mobile-topbar-right"><div id="mobile-right"></div></div></div>
+<div id="notif-panel" class="notif-panel"><div class="notif-hd">NOTIFICATIONS <span class="notif-mark" onclick="markNotifsRead()">Tout lire</span></div><div id="notif-list"></div></div>
+
+<main style="padding-top:var(--nav-h);padding-bottom:var(--bottom-h)">
+  <div class="msg-layout">
+    <!-- Conversations list -->
+    <div class="conv-list" id="conv-panel">
+      <div class="conv-header">MESSAGES</div>
+      <div id="conv-list-inner"><div class="spinner spinner-sm"></div></div>
+    </div>
+
+    <!-- Chat area -->
+    <div class="chat-area" id="chat-area-panel" style="display:none">
+      <div class="chat-area-header">
+        <button class="btn-icon" onclick="showConvList()" style="display:none" id="back-btn">←</button>
+        <div class="av av-sm" id="chat-av">?</div>
+        <div style="flex:1;min-width:0">
+          <div class="chat-area-name" id="chat-peer-name">—</div>
+          <div style="font-size:11px;color:var(--green)">● En ligne</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="view-profile-btn" onclick="">Voir profil</button>
+      </div>
+      <div class="chat-msgs-area" id="chat-msgs"><div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Début de la conversation</div></div>
+      <div class="chat-input-wrap">
+        <input class="chat-input-field" id="msg-input" placeholder="Écrire un message…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}">
+        <button class="chat-send-btn" onclick="sendMsg()">➤</button>
+      </div>
+    </div>
+
+    <!-- No conv selected (desktop) -->
+    <div class="no-conv-selected chat-empty-state" id="empty-chat">
+      <div style="font-size:48px;margin-bottom:12px">💬</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--muted2)">VOS MESSAGES</div>
+      <div style="color:var(--muted);font-size:13px;margin-top:6px">Sélectionnez une conversation ou écrivez à un utilisateur depuis une publication.</div>
+    </div>
+  </div>
+</main>
+
+<nav class="bottom-nav">
+  <button class="bnav-item" onclick="location.href='../index.html'"><span class="bnav-icon">🏠</span><span>Accueil</span></button>
+  <button class="bnav-item" onclick="location.href='feed.html'"><span class="bnav-icon">🔍</span><span>Recherches</span></button>
+  <button class="bnav-post" onclick="location.href='feed.html?newpost=1'"><div class="bnav-post-inner">＋</div></button>
+  <button class="bnav-item active" data-page="messages" onclick="location.href='messages.html'"><span class="bnav-icon">💬</span><span>Messages</span></button>
+  <button class="bnav-item" onclick="location.href='profile.html'"><span class="bnav-icon">👤</span><span>Profil</span></button>
+</nav>
+<div class="toast-stack" id="toast-stack"></div>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script>
+if (!Auth.isLoggedIn()) location.href = 'login.html?next=' + encodeURIComponent(location.href);
+buildNav('messages');
+
+const me = Auth.getUser();
+let activePeerId = null, pollInterval = null;
+const urlParams = new URLSearchParams(location.search);
+
+async function loadConversations() {
+  const c = document.getElementById('conv-list-inner'); if(!c) return;
+  try {
+    const d = await api.get('/messages/conversations');
+    if (!d.conversations.length) {
+      c.innerHTML = '<div style="padding:18px;text-align:center;color:var(--muted);font-size:13px">Aucune conversation.<br>Écrivez à quelqu\'un depuis une publication !</div>';
+      return;
+    }
+    c.innerHTML = d.conversations.map(cv => `
+      <div class="conv-item ${cv.unread_count>0?'unread':''} ${activePeerId===cv.other_user?'active':''}" id="conv-${cv.other_user}" onclick="openConv('${cv.other_user}','${esc(cv.full_name)}','${esc(cv.avatar_url||'')}')">
+        <div class="av av-sm">${cv.avatar_url?`<img src="${esc(cv.avatar_url)}">`:`${initials(cv.full_name)}`}</div>
+        <div style="flex:1;min-width:0">
+          <div class="conv-name">${esc(cv.full_name)}</div>
+          <div class="conv-last">${esc(cv.last_message||'')}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <div class="conv-time">${ago(cv.last_message_at)}</div>
+          ${cv.unread_count>0?`<div class="conv-unread-dot"></div>`:''}
+        </div>
+      </div>`).join('');
+  } catch(err) { c.innerHTML = `<div style="padding:14px;color:var(--red);font-size:13px">${esc(err.message)}</div>`; }
+}
+
+async function openConv(userId, name, avatarUrl) {
+  activePeerId = userId;
+  document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('conv-' + userId)?.classList.add('active');
+
+  // Mobile: hide conv list, show chat
+  const isMobile = window.innerWidth < 768;
+  if (isMobile) {
+    document.getElementById('conv-panel').style.display = 'none';
+    document.getElementById('back-btn').style.display = 'flex';
+  }
+  document.getElementById('empty-chat').style.display = 'none';
+  document.getElementById('chat-area-panel').style.display = 'flex';
+
+  document.getElementById('chat-peer-name').textContent = name;
+  document.getElementById('chat-av').innerHTML = avatarUrl ? `<img src="${esc(avatarUrl)}" style="width:100%;height:100%;object-fit:cover;border-radius:8px">` : initials(name);
+  document.getElementById('view-profile-btn').onclick = () => location.href = `profile.html?id=${userId}`;
+
+  await loadMessages();
+  clearInterval(pollInterval);
+  pollInterval = setInterval(loadMessages, 5000);
+}
+
+async function loadMessages() {
+  if (!activePeerId) return;
+  const c = document.getElementById('chat-msgs'); if(!c) return;
+  try {
+    const d = await api.get('/messages/' + activePeerId);
+    const wasAtBottom = c.scrollHeight - c.clientHeight <= c.scrollTop + 60;
+    c.innerHTML = d.messages.length ? d.messages.map(m => {
+      const mine = m.sender_id === me?.id;
+      return `<div class="msg-row ${mine?'mine':''}">
+        ${!mine?`<div class="av av-sm" style="flex-shrink:0">${m.sender_avatar?`<img src="${esc(m.sender_avatar)}">`:`${initials(m.sender_name||'')}`}</div>`:''}
+        <div>
+          <div class="msg-bubble">${esc(m.content)}</div>
+          <div class="msg-time-lbl">${ago(m.created_at)}</div>
+        </div>
+      </div>`;
+    }).join('') : '<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Début de la conversation</div>';
+    if (wasAtBottom) c.scrollTop = c.scrollHeight;
+  } catch(_) {}
+}
+
+async function sendMsg() {
+  const inp = document.getElementById('msg-input');
+  const content = inp?.value.trim();
+  if (!content || !activePeerId) return;
+  inp.value = '';
+  try {
+    await api.post('/messages', { receiverId: activePeerId, content });
+    await loadMessages();
+  } catch(err) { toast(err.message, 'error'); inp.value = content; }
+}
+
+function showConvList() {
+  activePeerId = null;
+  clearInterval(pollInterval);
+  document.getElementById('conv-panel').style.display = '';
+  document.getElementById('chat-area-panel').style.display = 'none';
+  document.getElementById('empty-chat').style.display = '';
+  document.getElementById('back-btn').style.display = 'none';
+  loadConversations();
+}
+
+// Auto-open from URL params
+const autoUserId = urlParams.get('userId');
+const autoName   = urlParams.get('name');
+if (autoUserId && autoName) {
+  loadConversations().then(() => openConv(autoUserId, decodeURIComponent(autoName), ''));
+} else {
+  loadConversations();
+}
+
+// Responsive
+window.addEventListener('resize', () => {
+  if (window.innerWidth >= 768) {
+    document.getElementById('conv-panel').style.display = '';
+    document.getElementById('back-btn').style.display = 'none';
+    if (!activePeerId) { document.getElementById('empty-chat').style.display = ''; document.getElementById('chat-area-panel').style.display = 'none'; }
+  }
+});
+</script>
+</body>
+</html>

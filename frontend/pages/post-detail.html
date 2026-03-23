@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Signalement — WANTED</title>
+<link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+<nav class="topnav"><button class="nav-logo" onclick="location.href='../index.html'">Wanted</button><div class="nav-links" id="nav-links"></div><div class="nav-search-wrap"><span class="nav-search-icon">🔍</span><input class="nav-search" placeholder="Rechercher…" oninput="handleSearch(this.value)"></div><div class="nav-right" id="nav-right"></div></nav>
+<div class="mobile-topbar"><button class="btn-icon" onclick="history.back()" style="margin-right:8px">←</button><button class="nav-logo" style="font-size:20px" onclick="location.href='../index.html'">Wanted</button><div class="mobile-topbar-right"><div id="mobile-right"></div></div></div>
+<div id="notif-panel" class="notif-panel"><div class="notif-hd">NOTIFICATIONS <span class="notif-mark" onclick="markNotifsRead()">Tout lire</span></div><div id="notif-list"></div></div>
+
+<main style="padding-top:var(--nav-h);padding-bottom:var(--bottom-h);max-width:800px;margin:0 auto;padding-left:var(--page-pad);padding-right:var(--page-pad)">
+  <div id="detail-container"><div class="spinner"></div></div>
+</main>
+
+<!-- PAY MODAL -->
+<div class="modal-overlay" id="pay-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal"><span class="modal-handle"></span><button class="modal-close" onclick="document.getElementById('pay-modal').classList.remove('open')">✕</button>
+    <div class="modal-title">AJOUTER UNE RÉCOMPENSE</div>
+    <div class="pay-options"><div class="pay-opt selected" data-provider="orange" onclick="selectProvider(this)"><div class="pay-opt-icon">🟠</div><div class="pay-opt-name">ORANGE MONEY</div></div><div class="pay-opt" data-provider="mtu" onclick="selectProvider(this)"><div class="pay-opt-icon">🟡</div><div class="pay-opt-name">MTN MONEY</div></div></div>
+    <div class="input-group"><label class="input-label">Montant (XAF)</label><input class="input" id="pay-amount" type="number" inputmode="numeric" placeholder="500" min="100"></div>
+    <div class="input-group"><label class="input-label">Numéro Mobile Money</label><input class="input" id="pay-phone" type="tel" inputmode="tel" placeholder="6XXXXXXXX"></div>
+    <div class="error-msg" id="pay-error"></div>
+    <button class="btn btn-primary btn-full btn-lg" id="pay-submit-btn" onclick="submitPayment()" style="margin-top:12px">PAYER</button>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="edit-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal modal-wide"><span class="modal-handle"></span>
+    <button class="modal-close" onclick="document.getElementById('edit-modal').classList.remove('open')">✕</button>
+    <div class="modal-title">MODIFIER LE SIGNALEMENT</div>
+    <form id="edit-form" onsubmit="event.preventDefault()">
+      <div class="input-row">
+        <div class="input-group"><label class="input-label">Nom complet</label><input class="input" id="ep-name" name="personName"></div>
+        <div class="input-group"><label class="input-label">Âge</label><input class="input" id="ep-age" name="personAge" type="number" inputmode="numeric"></div>
+      </div>
+      <div class="input-row">
+        <div class="input-group"><label class="input-label">Statut</label>
+          <select class="input" name="urgency" id="ep-urgency">
+            <option value="normal">Normal</option><option value="urgent">Urgent</option><option value="critical">Critique</option>
+          </select>
+        </div>
+        <div class="input-group"><label class="input-label">État</label>
+          <select class="input" name="status" id="ep-status">
+            <option value="missing">Recherché(e)</option><option value="found">Retrouvé(e)</option><option value="closed">Fermé</option>
+          </select>
+        </div>
+      </div>
+      <div class="input-group"><label class="input-label">Dernière localisation</label><input class="input" id="ep-loc" name="lastSeen"></div>
+      <div class="input-group"><label class="input-label">Nouvelle photo (optionnel)</label>
+        <div class="upload-zone" onclick="document.getElementById('ep-photo').click()">📷 Changer la photo<input id="ep-photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" style="display:none"></div>
+      </div>
+      <div class="input-group"><label class="input-label">Description</label><textarea class="input" id="ep-desc" name="description"></textarea></div>
+      <div class="input-row">
+        <div class="input-group"><label class="input-label">Tél. contact</label><input class="input" id="ep-phone" name="contactPhone" type="tel" inputmode="tel"></div>
+        <div class="input-group"><label class="input-label">Email contact</label><input class="input" id="ep-email" name="contactEmail" type="email" inputmode="email"></div>
+      </div>
+      <div class="error-msg" id="ep-err"></div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('edit-modal').classList.remove('open')">Annuler</button>
+        <button type="button" class="btn btn-primary btn-lg" id="ep-btn" onclick="saveEdit()" style="flex:1">SAUVEGARDER</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="bnav-item" onclick="location.href='../index.html'"><span class="bnav-icon">🏠</span><span>Accueil</span></button>
+  <button class="bnav-item active" onclick="location.href='feed.html'"><span class="bnav-icon">🔍</span><span>Recherches</span></button>
+  <button class="bnav-post" onclick="location.href='feed.html?newpost=1'"><div class="bnav-post-inner">＋</div></button>
+  <button class="bnav-item" onclick="location.href='messages.html'"><span class="bnav-icon">💬</span><span>Messages</span></button>
+  <button class="bnav-item" onclick="location.href='profile.html'"><span class="bnav-icon">👤</span><span>Profil</span></button>
+</nav>
+<div class="toast-stack" id="toast-stack"></div>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script>
+buildNav('feed');
+const postId = new URLSearchParams(location.search).get('id');
+let postData = null;
+
+async function loadPost() {
+  if (!postId) { document.getElementById('detail-container').innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div><div class="empty-title">ID manquant</div></div>'; return; }
+  try {
+    const d = await api.get('/posts/' + postId);
+    postData = d.post;
+    document.title = postData.person_name + ' — WANTED';
+    render(postData);
+  } catch (err) { document.getElementById('detail-container').innerHTML = `<div class="empty-state"><div class="empty-icon">❌</div><div class="empty-title">Introuvable</div><div style="color:var(--muted);font-size:13px">${esc(err.message)}</div></div>`; }
+}
+
+function render(p) {
+  const me = Auth.getUser();
+  const isOwner = me?.id === p.user_id || me?.role === 'admin';
+  const col = p.status==='found'?'#22C55E':p.urgency==='critical'?'#FF2D20':p.urgency==='urgent'?'#FF6B00':'#6B6B7A';
+  const statusLabel = p.status==='found'?'RETROUVÉ':p.urgency==='critical'?'CRITIQUE':'RECHERCHÉ';
+
+  document.getElementById('detail-container').innerHTML = `
+    <!-- Back -->
+    <button class="btn btn-ghost btn-sm" onclick="history.back()" style="margin:12px 0">← Retour</button>
+
+    <!-- Repost chain -->
+    ${p.original_poster_name && p.original_poster_name !== p.poster_name ? `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12px;color:var(--muted2)">
+      🔁 Repartagé par <strong style="color:var(--text)">${esc(p.poster_name)}</strong> · Publication originale de
+      <a href="profile.html?id=${p.original_poster_id}" style="color:var(--red);font-weight:700">${esc(p.original_poster_name)}</a>
+    </div>` : ''}
+
+    <!-- Status banner -->
+    <div style="height:4px;background:${col};border-radius:4px 4px 0 0;margin-bottom:0"></div>
+    <div class="card" style="border-radius:0 0 var(--radius-lg) var(--radius-lg);padding:20px;margin-bottom:14px">
+      ${p.photo_url ? `<img src="${esc(p.photo_url)}" alt="${esc(p.person_name)}" style="width:100%;max-height:340px;object-fit:cover;border-radius:10px;margin-bottom:16px">` : `<div style="width:100%;height:160px;background:var(--surface2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:60px;color:var(--surface3);margin-bottom:16px">${initials(p.person_name)}</div>`}
+
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+        <div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,8vw,40px);letter-spacing:2px;line-height:1">${esc(p.person_name)}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+            ${p.person_age?`<span class="tag">🎂 ${p.person_age} ans</span>`:''}
+            ${p.person_gender?`<span class="tag">${p.person_gender}</span>`:''}
+            <span class="tag">📍 ${esc(p.last_seen)}</span>
+            ${p.last_seen_date?`<span class="tag">📅 ${fmt(p.last_seen_date)}</span>`:''}
+            <span class="badge badge-${p.status==='found'?'green':p.urgency==='critical'?'red':p.urgency==='urgent'?'orange':'muted'}">${statusLabel}</span>
+          </div>
+        </div>
+        ${isOwner ? `<div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="openEdit()">✏️ Modifier</button>
+          <button class="btn btn-green btn-sm" onclick="markFound()" ${p.status==='found'?'disabled':''}>✅ Retrouvé</button>
+          <button class="btn btn-danger btn-sm" onclick="deletePost()">🗑️ Supprimer</button>
+        </div>` : ''}
+      </div>
+
+      <div style="font-size:14px;color:var(--muted2);line-height:1.7;margin:14px 0">${esc(p.description)}</div>
+
+      ${p.contact_phone||p.contact_email?`<div style="background:rgba(255,107,0,.06);border:1px solid rgba(255,107,0,.2);border-radius:10px;padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--orange);margin:14px 0">
+        ${p.contact_phone?`📞 ${esc(p.contact_phone)}<br>`:''}${p.contact_email?`📧 ${esc(p.contact_email)}`:''}
+      </div>`:''}
+
+      ${p.reward_coins>0?`<div style="background:rgba(245,197,24,.06);border:1px solid rgba(245,197,24,.2);border-radius:10px;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gold);margin-bottom:14px">
+        🪙 Récompense : <strong>${p.reward_coins} coins</strong>
+        ${isOwner?`<button class="btn btn-gold btn-sm" onclick="openPayModal('${p.id}')" style="margin-left:8px">+ Augmenter</button>`:''}
+      </div>`:''}
+      ${!isOwner?`<button class="btn btn-gold btn-sm" onclick="openPayModal('${p.id}')" style="margin-bottom:14px">🪙 Ajouter une récompense</button>`:''}
+
+      <!-- Actions -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:13px;border-top:1px solid var(--border)">
+        <button class="act-btn ${p.user_liked?'liked':''}" id="like-btn-${p.id}" onclick="doLike('${p.id}')" style="flex:none;padding:9px 14px">${p.user_liked?'❤️':'🤍'} <span id="lc-${p.id}">${p.likes_count||0}</span></button>
+        <button class="act-btn ${p.user_reposted?'reposted':''}" id="repost-btn-${p.id}" onclick="doRepost('${p.id}')" style="flex:none;padding:9px 14px">🔁 <span id="rc-${p.id}">${p.reposts_count||0}</span></button>
+        <button class="act-btn" onclick="doShare('${p.id}','${esc(p.person_name)}')" style="flex:none;padding:9px 14px">📤 Partager</button>
+        ${me&&me.id!==p.user_id?`<button class="btn btn-ghost btn-sm" onclick="location.href='messages.html?userId=${p.user_id}&name=${encodeURIComponent(p.poster_name||'')}'" style="margin-left:auto">💬 Contacter</button>`:''}
+      </div>
+
+      <!-- Poster -->
+      <div style="display:flex;align-items:center;gap:10px;padding-top:13px;border-top:1px solid var(--border);margin-top:13px;cursor:pointer" onclick="location.href='profile.html?id=${p.user_id}'">
+        <div class="av av-sm">${p.poster_avatar?`<img src="${esc(p.poster_avatar)}">`:`${initials(p.poster_name||'')}`}</div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--text)">${esc(p.poster_name||'')}</div>
+          <div style="font-size:11px;color:var(--muted)">${p.poster_city||''} · ${ago(p.created_at)}</div>
+        </div>
+        <span class="badge badge-gold" style="margin-left:auto">${p.poster_badge||'Membre'}</span>
+      </div>
+    </div>
+
+    <!-- Comments -->
+    <div class="card" style="padding:18px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--muted);margin-bottom:14px">TÉMOIGNAGES & COMMENTAIRES</div>
+      <div id="comments-list"><div class="spinner spinner-sm"></div></div>
+      ${Auth.isLoggedIn()?`
+        <div style="display:flex;gap:8px;margin-top:14px;align-items:flex-start">
+          <div class="av av-sm">${initials(me?.full_name||'?')}</div>
+          <textarea class="input" id="cmt-input" placeholder="Écrivez votre témoignage…" style="flex:1;min-height:70px" onkeydown="if(event.key==='Enter'&&event.ctrlKey)submitComment()"></textarea>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted2);cursor:pointer"><input type="checkbox" id="is-witness"> Je suis témoin</label>
+          <button class="btn btn-primary btn-sm" onclick="submitComment()">Publier</button>
+        </div>`:
+        `<p style="font-size:13px;color:var(--muted);margin-top:12px"><a href="login.html" style="color:var(--red)">Connectez-vous</a> pour témoigner</p>`}
+    </div>
+  `;
+  loadComments();
+}
+
+async function loadComments() {
+  const c = document.getElementById('comments-list'); if(!c) return;
+  try {
+    const d = await api.get('/comments/' + postId + '/comments');
+    c.innerHTML = d.comments.length ? d.comments.map(cm => `
+      <div style="display:flex;gap:9px;margin-bottom:12px">
+        <div class="av av-sm" style="cursor:pointer;flex-shrink:0" onclick="location.href='profile.html?id=${cm.user_id}'">${cm.avatar_url?`<img src="${esc(cm.avatar_url)}">`:`${initials(cm.full_name)}`}</div>
+        <div style="flex:1;background:var(--surface2);border-radius:10px;padding:9px 12px">
+          <div style="font-size:12px;font-weight:700;cursor:pointer" onclick="location.href='profile.html?id=${cm.user_id}'">${esc(cm.full_name)} ${cm.is_witness?'<span class="badge badge-blue" style="font-size:9px">TÉMOIN</span>':''}</div>
+          <div style="font-size:13px;color:var(--muted2);margin-top:3px;line-height:1.5">${esc(cm.content)}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px;font-family:'JetBrains Mono',monospace">${ago(cm.created_at)}</div>
+        </div>
+      </div>`).join('') : '<p style="color:var(--muted);font-size:13px">Aucun commentaire. Soyez le premier à témoigner !</p>';
+  } catch (_) {}
+}
+
+async function submitComment() {
+  const inp = document.getElementById('cmt-input');
+  const isWitness = document.getElementById('is-witness')?.checked;
+  if (!inp?.value.trim()) return;
+  try {
+    await api.post('/comments/' + postId + '/comments', { content: inp.value.trim(), isWitness });
+    inp.value = '';
+    if (document.getElementById('is-witness')) document.getElementById('is-witness').checked = false;
+    loadComments();
+    if (isWitness) toast('Témoignage enregistré ! +50 coins 🪙', 'coin');
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+async function markFound() {
+  if (!confirm('Confirmer que cette personne a été retrouvée ? Cette action distribue les coins de récompense.')) return;
+  try {
+    await api.post('/posts/' + postId + '/found');
+    toast('✅ Marqué comme retrouvé ! Les coins ont été distribués.', 'success');
+    loadPost();
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+async function deletePost() {
+  if (!confirm('Supprimer définitivement ce signalement ?')) return;
+  try {
+    await api.del('/posts/' + postId);
+    toast('Publication supprimée', 'info');
+    setTimeout(() => location.href = 'feed.html', 800);
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+function openEdit() {
+  if (!postData) return;
+  const p = postData;
+  document.getElementById('ep-name').value = p.person_name || '';
+  document.getElementById('ep-age').value  = p.person_age || '';
+  document.getElementById('ep-loc').value  = p.last_seen || '';
+  document.getElementById('ep-desc').value = p.description || '';
+  document.getElementById('ep-phone').value = p.contact_phone || '';
+  document.getElementById('ep-email').value = p.contact_email || '';
+  document.getElementById('ep-urgency').value = p.urgency || 'normal';
+  document.getElementById('ep-status').value  = p.status || 'missing';
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+async function saveEdit() {
+  const btn = document.getElementById('ep-btn'), err = document.getElementById('ep-err');
+  try {
+    btn.disabled = true; btn.textContent = 'Sauvegarde…';
+    const fd = new FormData(document.getElementById('edit-form'));
+    await api.putp('/posts/' + postId, fd);
+    document.getElementById('edit-modal').classList.remove('open');
+    toast('Signalement mis à jour ✓', 'success');
+    loadPost();
+  } catch (e) { err.textContent = e.message; }
+  finally { btn.disabled = false; btn.textContent = 'SAUVEGARDER'; }
+}
+
+loadPost();
+</script>
+</body>
+</html>
