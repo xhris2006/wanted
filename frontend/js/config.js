@@ -9,7 +9,7 @@
  *  → Networking → Public Networking → Generate Domain
  * ══════════════════════════════════════════════════════════
  */
-const BACKEND_RAILWAY_URL = 'https://wanted-production-4041.up.railway.app/';
+window.WANTED_API = 'https://wanted-production-4041.up.railway.app/api';
 
 // ── Ne rien modifier en dessous ──────────────────────────
 (function () {
